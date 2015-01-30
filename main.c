@@ -1,6 +1,6 @@
 /* 
- * File:   test.c
- * Author: Paulo
+ * File:   main.c
+ * Author: Paulostation
  *
  * Created on January 29, 2015, 10:52 PM
  */
@@ -8,7 +8,7 @@
 #include <windows.h> /* for HANDLE type, and console functions */
 #include <stdio.h> /* standard input/output */
 #include <stdlib.h> /* included for rand */
-#include <time.h> /* usado para delay */
+#include <time.h> /* used to make delays */
 #include <string.h>
 #define WIDTH 70
 #define HEIGHT 35
@@ -16,62 +16,18 @@
 HANDLE wHnd; /* write (output) handle */
 HANDLE rHnd; /* read (input handle */
 
-int snake[500] = {75, 76, 77, 78, 79, 80, 81, 82, 83}, snake2[500];
-int x, y, i, cont, direction = 1, rato;
+//snake 'object'
+int snake[500] = {75, 76, 77, 78, 79, 80, 81, 82, 83};
+//second array used to make the movement illusion
+int snake2[500];
+//general purpose integers
+int x, y, i, cont, direction = 1, prey;
 
 
-//method to reset the game
-int gameReset() {
-    
-    COORD characterBufferSize = {WIDTH, HEIGHT};
-    COORD characterPosition = {0, 0};
-    SMALL_RECT consoleWriteArea = {0, 0, WIDTH - 1, HEIGHT - 1};
-    CHAR_INFO consoleBuffer[WIDTH * HEIGHT];
-
-    for (i = 0; i < 500; i++) {
-        snake[i] = 0;
-    }
-    for (i = 0; i < 500; i++) {
-        snake2[i] = 0;
-    }
-    for (i = 0; i < tamanho2(); i++) {
-        consoleBuffer[snake2[i]].Char.AsciiChar = (unsigned char) 219;
-        consoleBuffer[snake2[i]].Attributes = 255;
-    }
-    snake[0] = 75;
-    snake[1] = 76;
-    snake[2] = 77;
-    snake[3] = 78;
-    snake[4] = 79;
-    snake[5] = 80;
-    snake[6] = 81;
-    snake[7] = 82;
-    snake[8] = 83;
-    for (i = 0; i < 8; i++) {
-        consoleBuffer[snake[i]].Char.AsciiChar = (unsigned char) 219;
-        consoleBuffer[snake[i]].Attributes = 255;
-    }
-    WriteConsoleOutputA(wHnd, consoleBuffer, characterBufferSize, characterPosition, &consoleWriteArea);
-    printf("Perdeu jovem =/ \n\n");
-    system("PAUSE");
-
-}
-
-//função para pegar o tamanho do vetor secundário
-
-int size() {
+/* Method used to get array size */
+int size(int array[]) {
     int i, cont = 0;
-    for (i = 0; snake[i] != '\0'; i++) {
-        cont++;
-    }
-    return cont;
-}
-
-//função para pegar o tamanha do vetor principal
-
-int tamanho2() {
-    int i, cont = 0;
-    for (i = 0; snake2[i] != '\0'; i++) {
+    for (i = 0; array[i] != '\0'; i++) {
         cont++;
     }
     return cont;
@@ -112,17 +68,13 @@ int main(void) {
 
     SMALL_RECT windowSize = {0, 0, WIDTH - 1, HEIGHT - 1};
 
-
     COORD bufferSize = {WIDTH, HEIGHT};
-
 
     COORD characterBufferSize = {WIDTH, HEIGHT};
     COORD characterPosition = {0, 0};
     SMALL_RECT consoleWriteArea = {0, 0, WIDTH - 1, HEIGHT - 1};
 
-
     CHAR_INFO consoleBuffer[WIDTH * HEIGHT];
-
 
     wHnd = GetStdHandle(STD_OUTPUT_HANDLE);
     rHnd = GetStdHandle(STD_INPUT_HANDLE);
@@ -141,14 +93,14 @@ int main(void) {
         }
     }
 
-    for (i = 0; i < tamanho2(); ++i) {
+    for (i = 0; i < size(snake2); ++i) {
         consoleBuffer[snake2[i]].Char.AsciiChar = (unsigned char) 219;
         consoleBuffer[snake2[i]].Attributes = 255;
     }
 
-    rato = rand() % 2000;
-    consoleBuffer[rato].Char.AsciiChar = (unsigned char) 219;
-    consoleBuffer[rato].Attributes = 255;
+    prey = rand() % 2000;
+    consoleBuffer[prey].Char.AsciiChar = (unsigned char) 219;
+    consoleBuffer[prey].Attributes = 255;
     WriteConsoleOutputA(wHnd, consoleBuffer, characterBufferSize, characterPosition, &consoleWriteArea);
     /* Main game loop */
     while (1) {
@@ -188,46 +140,35 @@ int main(void) {
                 }
             }
         }
-        // troca de estado anterior para estado atual 
-        for (i = 0; i < size(); i++) {
+        /* Copy the primary array to the secondary array shifting a pixel */
+        for (i = 0; i < size(snake2); i++) {
             snake2[i] = snake[i + 1];
         }
-        // direcionamento do objeto    
-        snake2[tamanho2()] = snake2[tamanho2() - 1] + direction;
-        // escrita de estado atual
-        for (i = 0; i < tamanho2(); ++i) {
+        /* Modify secondary array with the direction of the object */
+        snake2[size(snake2)] = snake2[size(snake2) - 1] + direction;
+        /* Write the changes on the console buffer */
+        for (i = 0; i < size(snake2); ++i) {
             consoleBuffer[snake2[i]].Char.AsciiChar = (unsigned char) 219;
             consoleBuffer[snake2[i]].Attributes = 255;
         }
-        //teste de colisão   
-        if (snake2[tamanho2() - 1] == rato) {
-            snake2[tamanho2()] = snake2[tamanho2() - 1] + direction;
-            rato = rand() % 2346;
-            consoleBuffer[rato].Char.AsciiChar = (unsigned char) 219;
-            consoleBuffer[rato].Attributes = 255;
+        /* Collision test with prey*/
+        if (snake2[size(snake2) - 1] == prey) {
+            snake2[size(snake2)] = snake2[size(snake2) - 1] + direction;
+            /* Generate a new position for the prey */
+            prey = rand() % 2346;
+            consoleBuffer[prey].Char.AsciiChar = (unsigned char) 219;
+            consoleBuffer[prey].Attributes = 255;
         }
         consoleBuffer[snake2[0]].Char.AsciiChar = (unsigned char) 219;
         consoleBuffer[snake2[0]].Attributes = 0;
-        consoleBuffer[rato].Attributes = 255;
+        consoleBuffer[prey].Attributes = 255;
+        /* Frame update */
         WriteConsoleOutputA(wHnd, consoleBuffer, characterBufferSize, characterPosition, &consoleWriteArea);
-        //teste de colisão com o objeto
-        /*
-        for (i = 9; i > 0; i--) {
-            if (snake2[tamanho2() - 1] == snake[i]) {
-                for (y = 0; y < HEIGHT; ++y) {
-                    for (x = 0; x < WIDTH; ++x) {
-                        consoleBuffer[x + WIDTH * y].Char.AsciiChar = (unsigned char) 219;
-                        consoleBuffer[x + WIDTH * y].Attributes = 0;
-                    }
-                }
-                WriteConsoleOutputA(wHnd, consoleBuffer, characterBufferSize, characterPosition, &consoleWriteArea);
-                resetaJogo();
-            }
-        }*/
-        for (i = 0; i < tamanho2(); i++) {
+        /* Copy the secondary array state into the primary to make the loop continue */
+        for (i = 0; i < size(snake2); i++) {
             snake[i] = snake2[i];
         }
+        
         Sleep(50);
-
     }
 }
